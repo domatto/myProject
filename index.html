@@ -92,69 +92,6 @@
 			completeTask(complete, position);
 			$("#taskActionsPopup").popup("close");
 		})
-
-		
-		//할일 추가 버튼 클릭했을 때(모바일)
-		$(document).bind("tap", "#addButton", function() {
-    		$("#popupDialog").popup("open");
- 		});
-		//할일 추가 팝업에서 취소버튼 클릭했을 때(모바일)
-		$(document).bind("tap", "#cancelButton", function() {
-    		$("#popupDialog").popup("close");
-  		});
-		//할일 추가 팝업에서 저장버튼 클릭했을 때(모바일)
-		$(document).bind("tap", "#saveButton", function() {
-			var taskDate = $("#dateInput").val();
-			var task = $("#taskInput").val();
-			var color = 'black';
-			var complete = 'false';
-        	insertData(taskDate, task, color, complete);
-        	// 저장 후 입력 필드 초기화
-        	document.getElementById("dateInput").value = "";
-        	document.getElementById("taskInput").value = "";
-		})
-		//All 버튼 눌렀을 때(모바일)
-		$(document).bind("tap", "#allButton", function() {
-			showAllTasks();
-		})
-		//Today 버튼 눌렀을 때(모바일)
-		$(document).bind("tap", "#todayButton", function() {
-			showTodayTasks();
-		})
-		//전체 삭제 버튼 클릭 이벤트(모바일)
-		$(document).bind("tap", "#deleteAllButton", function() {
-        	if (confirm("전체 삭제 하시겠습니까?")) {
-            	deleteAllTasks();
-        	}	
-    	});
-		//할 일 편집(모바일)
-		$(document).bind("tap", "li", function () {
-    		position = $(this).index();
-
-			console.log(position);
-    		$("#taskActionsPopup").popup("open");
-  		});
-		// 삭제 버튼 클릭 이벤트(모바일)
-		$(document).bind("tap", "#deleteTaskButton", function() {
-			deleteTask(position);
-    		$("#taskActionsPopup").popup("close");
-		});
-		//편집창 닫기(모바일)
-		$(document).bind("tap", "#closePopupButton" , function(){
-			$("#taskActionsPopup").popup("close");
-		})
-		//글자색 변경(모바일)
-		$(document).bind("tap", "#changeTextColorButton", function () {
-			var color = 'red';
-			updateColorData(color, position);
-			$("#taskActionsPopup").popup("close");
-		});
-		//완료표시(모바일)
-		$(document).bind("tap", "#completeButton", function() {
-			var complete = 'true';
-			completeTask(complete, position);
-			$("#taskActionsPopup").popup("close");
-		})
 	});    
 	
 </script>
