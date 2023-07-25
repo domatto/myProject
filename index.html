@@ -1,0 +1,191 @@
+<!--
+	할 일을 삭제해야 하는데 기본적으로 부여되는 rowid값은 바꿀 수 없어서 id INTEGER PRIMARY KEY AUTOINCREMENT라는게 있다는 것을 아는 데 시간이 많이 걸림.
+	컬럼에 id INTEGER PRIMARY KEY AUTOINCREMENT를 추가하여 바꿀 수 있는 고유한 id값을 주고 deleteTask()함수를 이용해 테이블의 인덱스에 해당하는 id컬럼 값을 가져오고
+	deleteTask1()함수를 이용해 삭제함.
+
+	날짜 정렬- showAllTasks()함수에 var selectSQL = 'SELECT * FROM list_todo3 ORDER BY taskDate';로 수정하여 날짜 내림차순 정렬을 구현하였지만
+	정렬하는 과정에서 id컬럼값이 섞이면서 삭제기능과 글자색 변경 기능이 제대로 구현되지 않음.
+	상단에 정렬- 위와 동일.
+
+	완료표시: 원래는 글자 가운데 줄과 동시에 하단으로 배치하려고 계획하였으나 위와 같은 이유로 글자 가운데 줄만 적용.
+-->
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="initial-scale=1.0, width=device-width">
+	<title>todoList</title>
+
+<!-- 제이쿼리 모바일, 제이쿼리 라이브러리 파일 -->
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css"/>
+	<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+<!-- 사용자 정의 자바스크립트 파일 -->
+<script src="scripts/dbHandle.js"></script>
+<script>
+	$(document).ready( function() {
+		// DB 연결
+		openDB();  
+		createTable();   
+		// 이벤트 함수 정의
+		//할일 추가 버튼 클릭했을 때
+		$(document).on("click", "#addButton", function() {
+    		$("#popupDialog").popup("open");
+ 		});
+		//할일 추가 팝업에서 취소버튼 클릭했을 때
+		$(document).on("click", "#cancelButton", function() {
+    		$("#popupDialog").popup("close");
+  		});
+		//할일 추가 팝업에서 저장버튼 클릭했을 때
+		$(document).on("click", "#saveButton", function() {
+			var taskDate = $("#dateInput").val();
+			var task = $("#taskInput").val();
+			var color = 'black';
+			var complete = 'false';
+        	insertData(taskDate, task, color, complete);
+        	// 저장 후 입력 필드 초기화
+        	document.getElementById("dateInput").value = "";
+        	document.getElementById("taskInput").value = "";
+		})
+		//All 버튼 눌렀을 때
+		$(document).on("click", "#allButton", function() {
+			showAllTasks();
+		})
+		//Today 버튼 눌렀을 때
+		$(document).on("click", "#todayButton", function() {
+			showTodayTasks();
+		})
+		//전체 삭제 버튼 클릭 이벤트
+		$(document).on("click", "#deleteAllButton", function() {
+        	if (confirm("전체 삭제 하시겠습니까?")) {
+            	deleteAllTasks();
+        	}	
+    	});
+		//할 일 편집
+		$(document).on("click", "li", function () {
+    		position = $(this).index();
+
+			console.log(position);
+    		$("#taskActionsPopup").popup("open");
+  		});
+		// 삭제 버튼 클릭 이벤트
+		$(document).on("click", "#deleteTaskButton", function() {
+			deleteTask(position);
+    		$("#taskActionsPopup").popup("close");
+		});
+		//편집창 닫기
+		$(document).on("click", "#closePopupButton" , function(){
+			$("#taskActionsPopup").popup("close");
+		})
+		//글자색 변경
+		$(document).on("click", "#changeTextColorButton", function () {
+			var color = 'red';
+			updateColorData(color, position);
+			$("#taskActionsPopup").popup("close");
+		});
+		//완료표시
+		$(document).on("click", "#completeButton", function() {
+			var complete = 'true';
+			completeTask(complete, position);
+			$("#taskActionsPopup").popup("close");
+		})
+	});    
+	
+</script>
+<style type="text/css">
+  	.gap { padding-top : 15px; padding-bottom: 30px; }
+  	.ui-btn {
+      display: inline-block;
+      margin-right: 5px;
+	}
+	#addButton {
+		position: fixed;
+		right : 7%;
+		bottom : 10%;
+		width: 50px;
+		height: 50px;
+		border-radius: 50%;
+		background-color: blue;
+		z-index: 1;
+	}
+	#dateInputTip {
+		font-size:small;
+		color: gray;
+	}
+	#deleteAllButton {
+        float: right;
+        margin-top: 5px;
+        background-color: gray;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
+	li {
+		border-bottom: 1px solid lightgray;
+		font-size: 17pt;
+	}
+	#page_main {
+		background-color: #282828;
+	}
+</style>	
+</head>  
+<body>
+
+  <div data-role="page" id="page_main">
+	<div data-role="header" data-position="fixed" data-theme="b">
+		<h1>Doit!</h1>
+	</div>
+
+	<div data-role="content" data-theme="b">
+		<a href="#" data-role="button" id="allButton">All</a>
+		<a href="#" data-role="button" id="todayButton">Today</a>
+		<a href="#" data-role="button" id="deleteAllButton">전체삭제</a>
+		<a href="#" id="addButton" data-role="button" data-icon="plus" data-iconpos="notext"></a>
+
+		<!--할일 추가 팝업-->
+		<div data-role="popup" id="popupDialog" data-overlay-theme="a" data-theme="b" data-dismissible="false">
+			<div data-role="header" data-theme="a">
+			  <h1>할일 추가</h1>
+			</div>
+			<div role="main" class="ui-content">
+			  <label for="dateInput">날짜:</label>
+			  <span id="dateInputTip">(지정하지 않아도 됩니다.)</span>
+			  <input type="date" name="dateInput" id="dateInput">
+			  <label for="taskInput">할일:</label>
+			  <input type="text" name="taskInput" id="taskInput" required>
+			  <button id="saveButton">저장</button>
+			  <button id="cancelButton">취소</button>
+			</div>
+		</div>
+
+		<!--할일 목록 동적추가-->
+		<ul id="listTodo" data-role="listview" data-inset="true">
+		</ul>
+
+		<!--할 일 편집 팝업-->
+		<div data-role="popup" id="taskActionsPopup" data-overlay-theme="a" data-theme="b" data-dismissible="false">
+			<div data-role="header" data-theme="a">
+			  <h1>Edit</h1>
+			</div>
+			<div role="main" class="ui-content">
+			  <button id="completeButton">완료!</button>
+			  <button id="changeTextColorButton">중요표시</button>
+			  <button id="pinToTopButton">상단에 고정</button>
+			  <button id="deleteTaskButton">삭제</button>
+			  <button id="closePopupButton">닫기</button>
+			</div>
+		</div>
+
+	</div>
+
+	<div data-role="footer" data-position="fixed" data-theme="b">
+		<h4>ⓒ 2023. 김동현 all rights reserved.</h4>
+    </div>
+  </div>
+</body>
+</html>
